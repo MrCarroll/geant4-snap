@@ -1,0 +1,188 @@
+name: geant4
+base: core20
+version: '11.00.b01'
+summary: A toolkit for the simulation of the passage of particles through matter.
+description: |
+  This product includes software developed by Members of the Geant4 Collaboration ( http://cern.ch/geant4 )
+  This product is licensed under the Geant4 Software License ( https://geant4.web.cern.ch/license/LICENSE.html )
+
+  This snap is intended to provide an easy-to-install package of the Geant4 toolkit for the new experimental physicist.
+  
+  Snaps are container packages for easy application deployment, designed to be consistent and reliable across different host distributions. 
+  They additionally impose some strong sandboxing for security. 
+  One caveat of this sandboxing is that this package can only read/write to your $HOME directory, or via specific network protocols. 
+  It is highly advised that you place all your data files in your $HOME directory to be accessible.
+
+  This snap comes bundled with its own G++ compiler, CMake, make, and common dependencies.
+  It also includes all the data files available at https://geant4.web.cern.ch/support/download
+
+  As a quick primer, consider the following instructions.
+
+  ```
+  cp /snap/geant4/current/usr/local/share/Geant4-11.0.0/examples $HOME -R
+  cd $HOME/examples/basic/B1
+  mkdir build
+  cd build
+  geant4.cmake ..
+  geant4.make
+  geant4.run ./exampleB1
+  ```
+
+grade: stable
+confinement: strict
+compression: lzo
+
+parts:
+  geant4:
+    plugin: cmake
+    source: https://geant4-data.web.cern.ch/releases/geant4.11.00.b01.tar.gz
+    cmake-parameters:
+      - -DCMAKE_CXX_STANDARD=17
+      - -DGEANT4_INSTALL_DATA=ON
+      - -DGEANT4_BUILD_MULTITHREADED=OFF
+      - -DGEANT4_USE_QT=ON
+      - -DGEANT4_USE_RAYTRACER_X11=ON
+    build-packages:
+      - qtbase5-dev
+      - libexpat1-dev
+      - libqt5opengl5-dev
+      - libxmu-dev
+      - libmotif-dev
+      - libx11-dev
+    stage-packages:
+      - g++
+      - cmake
+      - make
+      - libglu1-mesa
+      - libegl1
+      # Headers
+      - libc6-dev
+      - libstdc++-9-dev
+      - qtbase5-dev
+      - libexpat1-dev
+      - libqt5opengl5-dev
+      - libxmu-dev
+      - libmotif-dev
+      - libx11-dev
+      # QT (Desktop Helpers)
+      - libxkbcommon0
+      - ttf-ubuntu-font-family
+      - dmz-cursor-theme
+      - light-themes
+      - adwaita-icon-theme
+      - gnome-themes-standard
+      - shared-mime-info
+      - libqt5gui5
+      - libgdk-pixbuf2.0-0
+      - libqt5svg5
+      - locales-all
+      # QT (Snapcraft statically resolved dependencies)
+      - libdouble-conversion3
+      - libfreetype6
+      - libgraphite2-3
+      - libharfbuzz0b
+      - libpcre2-16-0
+      - libpng16-16
+      - libqt5core5a
+      - libqt5opengl5
+      - libqt5widgets5
+    override-build: |
+      snapcraftctl build
+      # Correct folder names in CMake import configuration
+      for file in $(grep "/root/parts/geant4/install\|/root/parts/geant4/build" ${SNAPCRAFT_PART_INSTALL}/usr/local/lib/Geant4-11.0.0 -r | cut -d ":" -f 1 | uniq); do
+        sed -i 's!/root/parts/geant4/install!/snap/geant4/current!g' $file
+        sed -i 's!/root/parts/geant4/install!/snap/geant4/current!g' $file
+      done
+      
+      # Prevent use of -isystem in CMake import configuration
+      for file in $(grep "isystem" ${SNAPCRAFT_PART_INSTALL}/usr/local/lib/Geant4-11.0.0 -r | cut -d ":" -f 1 | uniq); do
+        sed -i 's!\-isystem!\-I!g' $file
+      done
+      
+  extras:
+    plugin: dump
+    source: ./extras
+    source-type: local
+    
+environment:
+  path: $SNAP/usr/local/bin
+  LD_LIBRARY_PATH: $SNAP/usr/local/lib
+  Geant4_DIR: $SNAP/usr/local/lib/Geant4-11.0.0
+  G4NEUTRONHPDATA: $SNAP/usr/local/share/Geant4-11.0.0/data/G4NDL4.6
+  G4LEDATA: $SNAP/usr/local/share/Geant4-11.0.0/data/G4EMLOW7.17
+  G4LEVELGAMMADATA: $SNAP/usr/local/share/Geant4-11.0.0/data/PhotonEvaporation5.7
+  G4RADIOACTIVEDATA: $SNAP/usr/local/share/Geant4-11.0.0/data/RadioactiveDecay5.6
+  G4PARTICLEXSDATA: $SNAP/usr/local/share/Geant4-11.0.0/data/G4PARTICLEXS3.1.1
+  G4PIIDATA: $SNAP/usr/local/share/Geant4-11.0.0/data/G4PII1.3
+  G4REALSURFACEDATA: $SNAP/usr/local/share/Geant4-11.0.0/data/RealSurface2.2
+  G4SAIDXSDATA: $SNAP/usr/local/share/Geant4-11.0.0/data/G4SAIDDATA2.0
+  G4ABLADATA: $SNAP/usr/local/share/Geant4-11.0.0/data/G4ABLA3.1
+  G4INCLDATA: $SNAP/usr/local/share/Geant4-11.0.0/data/G4INCL1.0
+  G4ENSDFSTATEDATA: $SNAP/usr/local/share/Geant4-11.0.0/data/G4ENSDFSTATE2.3
+    
+layout:
+  /usr/share/libdrm:
+    symlink: $SNAP/usr/share/libdrm
+  /usr/include:
+    bind: $SNAP/usr/include
+  /usr/lib/x86_64-linux-gnu/libc_nonshared.a:
+    symlink: $SNAP/usr/lib/x86_64-linux-gnu/libc_nonshared.a
+  #QT
+  /usr/lib/x86_64-linux-gnu/libEGL.so:
+    symlink: $SNAP/usr/lib/x86_64-linux-gnu/libEGL.so
+  /usr/lib/x86_64-linux-gnu/libGL.so:
+    symlink: $SNAP/usr/lib/x86_64-linux-gnu/libGL.so
+  # CMake workarounds
+  /usr/lib/x86_64-linux-gnu/libX11.so:
+    symlink: $SNAP/usr/lib/x86_64-linux-gnu/libX11.so
+  /usr/lib/x86_64-linux-gnu/libICE.so:
+    symlink: $SNAP/usr/lib/x86_64-linux-gnu/libICE.so
+  /usr/lib/x86_64-linux-gnu/libXext.so:
+    symlink: $SNAP/usr/lib/x86_64-linux-gnu/libXext.so
+  /usr/lib/x86_64-linux-gnu/libXmu.so:
+    symlink: $SNAP/usr/lib/x86_64-linux-gnu/libXmu.so
+  /usr/lib/x86_64-linux-gnu/libXt.so:
+    symlink: $SNAP/usr/lib/x86_64-linux-gnu/libXt.so
+  /usr/lib/x86_64-linux-gnu/libSM.so:
+    symlink: $SNAP/usr/lib/x86_64-linux-gnu/libSM.so
+  /usr/lib/x86_64-linux-gnu/libexpat.so:
+    symlink: $SNAP/usr/lib/x86_64-linux-gnu/libexpat.so
+plugs:
+  home:
+  network:
+  opengl:
+  x11:
+  wayland:
+  desktop:
+  desktop-legacy:
+  removable-media:
+  gtk-2-engines:
+    interface: content
+    target: $SNAP/lib/gtk-2.0
+    default-provider: gtk-common-themes
+  gtk-2-themes:
+    interface: content
+    target: $SNAP/data-dir/themes
+    default-provider: gtk-common-themes
+  icon-themes:
+    interface: content
+    target: $SNAP/data-dir/icons
+    default-provider: gtk-common-themes
+  sound-themes:
+    interface: content
+    target: $SNAP/data-dir/sounds
+    default-provider: gtk-common-themes
+
+apps:
+  cmake:
+    command: usr/bin/cmake
+    command-chain: 
+      - bin/setup-sandbox.sh
+  make:
+    command: usr/bin/make
+    command-chain: 
+      - bin/setup-sandbox.sh
+  run:
+    command: bin/run.sh
+    command-chain:
+      - bin/setup-sandbox.sh
