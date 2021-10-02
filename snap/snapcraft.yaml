@@ -89,13 +89,14 @@ parts:
     override-build: |
       snapcraftctl build
       # Correct folder names in CMake import configuration
-      for file in $(grep "/root/parts/geant4/install\|/root/parts/geant4/build" ${SNAPCRAFT_PART_INSTALL}/usr/local/lib/Geant4-11.0.0 -r | cut -d ":" -f 1 | uniq); do
+      for file in $(grep "/root/parts/geant4/install\|/root/parts/geant4/build" ${SNAPCRAFT_PART_INSTALL}/usr/local/lib/Geant4-11.0.0 -r -I | cut -d ":" -f 1 | uniq); do
+        sed -i 's!/root/parts/geant4/build!/snap/geant4/current!g' $file
         sed -i 's!/root/parts/geant4/install!/snap/geant4/current!g' $file
-        sed -i 's!/root/parts/geant4/install!/snap/geant4/current!g' $file
+        sed -i 's!/root/stage!/snap/geant4/current!g` $file
       done
       
       # Prevent use of -isystem in CMake import configuration
-      for file in $(grep "isystem" ${SNAPCRAFT_PART_INSTALL}/usr/local/lib/Geant4-11.0.0 -r | cut -d ":" -f 1 | uniq); do
+      for file in $(grep "isystem" ${SNAPCRAFT_PART_INSTALL}/usr/local/lib/Geant4-11.0.0 -r -I | cut -d ":" -f 1 | uniq); do
         sed -i 's!\-isystem!\-I!g' $file
       done
       
