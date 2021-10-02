@@ -107,7 +107,7 @@ parts:
 environment:
   path: $SNAP/usr/local/bin
   LD_LIBRARY_PATH: $SNAP/usr/local/lib
-  Geant4_DIR: $SNAP/usr/local/lib/Geant4-11.0.0
+  CMAKE_PREFIX_PATH: ${SNAP}
   G4NEUTRONHPDATA: $SNAP/usr/local/share/Geant4-11.0.0/data/G4NDL4.6
   G4LEDATA: $SNAP/usr/local/share/Geant4-11.0.0/data/G4EMLOW7.17
   G4LEVELGAMMADATA: $SNAP/usr/local/share/Geant4-11.0.0/data/PhotonEvaporation5.7
